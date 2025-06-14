@@ -7,6 +7,7 @@ from app.bedrock import (
     BedrockThrottlingException,
     calculate_price,
     compose_args_for_converse_api,
+    _get_secure_proxy_client,
 )
 from app.repositories.models.conversation import (
     ContentModel,
@@ -20,7 +21,11 @@ from app.repositories.models.conversation import (
 from app.repositories.models.custom_bot import GenerationParamsModel
 from app.repositories.models.custom_bot_guardrails import BedrockGuardrailsModel
 from app.routes.schemas.conversation import type_model_name
-from app.utils import get_bedrock_runtime_client, get_current_time
+from app.utils import (
+    get_bedrock_runtime_client,
+    get_current_time,
+    get_proxy_bedrock_runtime,
+)
 from botocore.exceptions import ClientError
 from mypy_boto3_bedrock_runtime.literals import ConversationRoleType, StopReasonType
 from mypy_boto3_bedrock_runtime.type_defs import GuardrailConverseContentBlockTypeDef
@@ -208,8 +213,8 @@ class ConverseApiStreamHandler:
                 enable_reasoning=enable_reasoning,
             )
             logger.info(f"args for converse_stream: {args}")
-
-            client = get_bedrock_runtime_client()
+            # client = get_bedrock_runtime_client()
+            client = _get_secure_proxy_client()
             try:
                 response = client.converse_stream(**args)
             except ClientError as e:

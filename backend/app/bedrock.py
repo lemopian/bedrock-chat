@@ -41,7 +41,41 @@ ENABLE_BEDROCK_CROSS_REGION_INFERENCE = (
     os.environ.get("ENABLE_BEDROCK_CROSS_REGION_INFERENCE", "false") == "true"
 )
 
-client = get_bedrock_runtime_client()
+# LiteLLM Proxy Configuration - secure environment variables
+LITELLM_PROXY_GATEWAY_URL = os.environ.get("LITELLM_PROXY_GATEWAY_URL")
+LITELLM_PROXY_API_TOKEN = os.environ.get("LITELLM_PROXY_API_TOKEN")
+
+# client = get_bedrock_runtime_client()
+
+
+def _get_secure_proxy_client():
+    """
+    Create a secure bedrock runtime proxy client with environment variable validation.
+
+    Returns:
+        Configured bedrock runtime client
+
+    Raises:
+        ValueError: If required environment variables are not set
+    """
+    if not LITELLM_PROXY_GATEWAY_URL:
+        raise ValueError(
+            "LITELLM_PROXY_GATEWAY_URL environment variable must be set. "
+            "Please set it to your LiteLLM gateway URL with '/bedrock' suffix."
+        )
+
+    if not LITELLM_PROXY_API_TOKEN:
+        raise ValueError(
+            "LITELLM_PROXY_API_TOKEN environment variable must be set. "
+            "Please set it to your LiteLLM API token generated from the admin UI."
+        )
+
+    from app.utils import get_proxy_bedrock_runtime
+
+    return get_proxy_bedrock_runtime(
+        gateway_url=LITELLM_PROXY_GATEWAY_URL,
+        gateway_token=LITELLM_PROXY_API_TOKEN,
+    )
 
 
 class BedrockThrottlingException(Exception): ...
@@ -504,7 +538,8 @@ def compose_args_for_converse_api(
 def call_converse_api(
     args: ConverseStreamRequestTypeDef,
 ) -> ConverseResponseTypeDef:
-    client = get_bedrock_runtime_client()
+    # client = get_bedrock_runtime_client()
+    client = _get_secure_proxy_client()
     try:
         return client.converse(**args)
     except ClientError as e:

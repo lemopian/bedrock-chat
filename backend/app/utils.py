@@ -41,6 +41,25 @@ def get_bedrock_client(region=BEDROCK_REGION):
     return client
 
 
+def get_proxy_bedrock_runtime(gateway_url: str, gateway_token: str):
+    from botocore import UNSIGNED
+    """Create a boto3 bedrock-runtime client configured for the GenAI gateway proxy"""
+    client = boto3.client(
+        "bedrock-runtime",
+        config=Config(signature_version=UNSIGNED),
+        endpoint_url=gateway_url,
+    )
+
+    # Define LiteLLM API key authorization header handler
+    def add_authorization_header(request, **_):
+        request.headers["Authorization"] = f"Bearer {gateway_token}"
+
+    # Register the event handler
+    client.meta.events.register("request-created.*", add_authorization_header)
+
+    return client
+
+
 def get_bedrock_runtime_client(region=BEDROCK_REGION):
     client = boto3.client("bedrock-runtime", region_name=region)
     return client
