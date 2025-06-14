@@ -1,4 +1,3 @@
-#!/bin/bash
 
 # Function to log messages with timestamps
 log_message() {
@@ -39,6 +38,15 @@ echo "--------------------------------------------------------------------------
 echo "  🌟 Let's begin your v3.x journey — the future awaits!                    "
 echo "==========================================================================="
 echo ""
+
+# Load environment variables from .env file if it exists
+if [[ -f .env ]]; then
+    log_message "INFO" "Loading environment variables from .env file..."
+    export $(cat .env | xargs)
+    log_message "SUCCESS" "Environment variables loaded from .env file"
+else
+    log_message "WARNING" ".env file not found - using system environment variables"
+fi
 
 # while true; do
 #     read -p "Are you ready to explore the world of v3.x? (y/N): " answer
